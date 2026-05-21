@@ -1,0 +1,309 @@
+package com.example.ecommerce.service;
+
+import com.example.ecommerce.entity.*;
+import com.example.ecommerce.repository.*;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+public class AnalysisService {
+
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final BrowseLogRepository browseLogRepository;
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+
+    public AnalysisService(OrderRepository orderRepository,
+                           OrderItemRepository orderItemRepository,
+                           BrowseLogRepository browseLogRepository,
+                           UserRepository userRepository,
+                           ProductRepository productRepository) {
+        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.browseLogRepository = browseLogRepository;
+        this.userRepository = userRepository;
+        this.productRepository = productRepository;
+    }
+
+    // ========== 用户画像 ==========
+
+    /**
+     * 用户画像分析
+     * 返回：地域分布、购买力等级、偏好类别
+     */
+    public Map<String, Object> getUserProfile(String username) {
+        Map<String, Object> profile = new HashMap<>();
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) return profile;
+
+        // 地域
+        profile.put("region", user.getRegion() != null ? user.getRegion() : "未知");
+
+        // 购买力分析（基于历史订单总金额）
+        List<Order> orders = orderRepository.findByUser(user);
+        double totalSpent = orders.stream()
+                .filter(o -> "PAID".equals(o.getStatus()) || "COMPLETED".equals(o.getStatus()))
+                .mapToDouble(o -> o.getTotalAmount().doubleValue())
+                .sum();
+        String purchasingPower;
+        if (totalSpent > 10000) purchasingPower = "高";
+        else if (totalSpent > 5000) purchasingPower = "中";
+        else purchasingPower = "低";
+        profile.put("purchasingPower", purchasingPower);
+        profile.put("totalSpent", totalSpent);
+        profile.put("orderCount", orders.size());
+
+        // 偏好类别（基于浏览记录）
+        List<Object[]> categoryPrefs = browseLogRepository.findUserCategoryPreferences(user);
+        List<Map<String, Object>> preferences = new ArrayList<>();
+        for (Object[] pref : categoryPrefs) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("category", pref[0]);
+            item.put("count", pref[1]);
+            preferences.add(item);
+        }
+        profile.put("categoryPreferences", preferences);
+
+        return profile;
+    }
+
+    // ========== 销售趋势 ==========
+
+    /**
+     * 销售趋势数据（用于图表）
+     * 返回：按日期的销售额列表
+     */
+    public Map<String, Object> getSalesTrend(String period) {
+        Map<String, Object> result = new HashMap<>();
+        List<String> dates = new ArrayList<>();
+        List<Double> sales = new ArrayList<>();
+
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start;
+
+        switch (period) {
+            case "week":
+                start = LocalDate.now().minusDays(6).atStartOfDay();
+                for (int i = 0; i < 7; i++) {
+                    LocalDate day = LocalDate.now().minusDays(6 - i);
+                    dates.add(day.toString());
+                    LocalDateTime dayStart = day.atStartOfDay();
+                    LocalDateTime dayEnd = day.atTime(LocalTime.MAX);
+                    Double daySales = orderRepository.getSalesByDateRange(dayStart, dayEnd);
+                    sales.add(daySales != null ? daySales : 0.0);
+                }
+                break;
+            case "month":
+                start = LocalDate.now().minusDays(29).atStartOfDay();
+                for (int i = 0; i < 30; i++) {
+                    LocalDate day = LocalDate.now().minusDays(29 - i);
+                    dates.add(day.toString());
+                    LocalDateTime dayStart = day.atStartOfDay();
+                    LocalDateTime dayEnd = day.atTime(LocalTime.MAX);
+                    Double daySales = orderRepository.getSalesByDateRange(dayStart, dayEnd);
+                    sales.add(daySales != null ? daySales : 0.0);
+                }
+                break;
+            default:
+                start = LocalDate.now().minusDays(6).atStartOfDay();
+                for (int i = 0; i < 7; i++) {
+                    LocalDate day = LocalDate.now().minusDays(6 - i);
+                    dates.add(day.toString());
+                    LocalDateTime dayStart = day.atStartOfDay();
+                    LocalDateTime dayEnd = day.atTime(LocalTime.MAX);
+                    Double daySales = orderRepository.getSalesByDateRange(dayStart, dayEnd);
+                    sales.add(daySales != null ? daySales : 0.0);
+                }
+                break;
+        }
+
+        result.put("dates", dates);
+        result.put("sales", sales);
+        return result;
+    }
+
+    // ========== 销售排行榜 ==========
+
+    /**
+     * 商品销售排行榜
+     */
+    public List<Map<String, Object>> getProductRanking(String period) {
+        List<Object[]> rankingData = orderItemRepository.findAllTimeTopSellingProducts();
+        List<Map<String, Object>> ranking = new ArrayList<>();
+        int rank = 1;
+        for (Object[] data : rankingData) {
+            Product product = (Product) data[0];
+            Long totalQty = (Long) data[1];
+            Map<String, Object> item = new HashMap<>();
+            item.put("rank", rank++);
+            item.put("productId", product.getId());
+            item.put("productName", product.getName());
+            item.put("category", product.getCategory());
+            item.put("price", product.getPrice());
+            item.put("totalSold", totalQty);
+            ranking.add(item);
+        }
+        return ranking;
+    }
+
+    // ========== 销售异常检测 ==========
+
+    /**
+     * 简单销售异常检测
+     * 如果某天销售额低于平均值的50%或高于平均值的200%，视为异常
+     */
+    public Map<String, Object> detectSalesAnomalies() {
+        Map<String, Object> result = new HashMap<>();
+        List<Map<String, Object>> anomalies = new ArrayList<>();
+
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start = LocalDate.now().minusDays(7).atStartOfDay();
+
+        // 计算7天平均销售额
+        double totalSales = 0;
+        int dayCount = 0;
+        Map<LocalDate, Double> dailySales = new HashMap<>();
+
+        for (int i = 0; i < 7; i++) {
+            LocalDate day = LocalDate.now().minusDays(6 - i);
+            LocalDateTime dayStart = day.atStartOfDay();
+            LocalDateTime dayEnd = day.atTime(LocalTime.MAX);
+            Double daySales = orderRepository.getSalesByDateRange(dayStart, dayEnd);
+            double sales = daySales != null ? daySales : 0.0;
+            dailySales.put(day, sales);
+            totalSales += sales;
+            dayCount++;
+        }
+
+        double avgSales = dayCount > 0 ? totalSales / dayCount : 0;
+
+        // 检测异常
+        for (Map.Entry<LocalDate, Double> entry : dailySales.entrySet()) {
+            Map<String, Object> anomaly = new HashMap<>();
+            anomaly.put("date", entry.getKey().toString());
+            anomaly.put("sales", entry.getValue());
+            anomaly.put("average", avgSales);
+
+            if (avgSales > 0) {
+                if (entry.getValue() < avgSales * 0.5) {
+                    anomaly.put("type", "偏低");
+                    anomaly.put("level", "警告");
+                    anomalies.add(anomaly);
+                } else if (entry.getValue() > avgSales * 2) {
+                    anomaly.put("type", "偏高");
+                    anomaly.put("level", "注意");
+                    anomalies.add(anomaly);
+                }
+            }
+        }
+
+        result.put("averageSales", avgSales);
+        result.put("anomalies", anomalies);
+        result.put("totalSales", totalSales);
+        return result;
+    }
+
+    // ========== 推荐系统（简单版） ==========
+
+    /**
+     * "浏览过此商品的人也买了..." 推荐
+     * 基于购买该商品的用户还买了什么
+     */
+    public List<Product> getRecommendations(Long productId, int limit) {
+        // 获取购买过该商品的所有订单
+        List<Order> allOrders = orderRepository.findAllByOrderByCreatedAtDesc();
+        Set<Long> userIds = new HashSet<>();
+
+        // 找出购买过该商品的用户
+        for (Order order : allOrders) {
+            for (OrderItem item : order.getOrderItems()) {
+                if (item.getProduct().getId().equals(productId)) {
+                    userIds.add(order.getUser().getId());
+                    break;
+                }
+            }
+        }
+
+        // 这些用户还买了什么
+        Map<Long, Long> productCount = new HashMap<>();
+        for (Order order : allOrders) {
+            if (userIds.contains(order.getUser().getId())) {
+                for (OrderItem item : order.getOrderItems()) {
+                    if (!item.getProduct().getId().equals(productId)) {
+                        productCount.merge(item.getProduct().getId(), item.getQuantity().longValue(), Long::sum);
+                    }
+                }
+            }
+        }
+
+        // 按购买次数排序
+        return productCount.entrySet().stream()
+                .sorted(Map.Entry.<Long, Long>comparingByValue().reversed())
+                .limit(limit)
+                .map(entry -> productRepository.findById(entry.getKey()).orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    // ========== 仪表盘数据 ==========
+
+    /**
+     * 获取管理仪表盘汇总数据
+     */
+    public Map<String, Object> getDashboardData() {
+        Map<String, Object> data = new HashMap<>();
+
+        // 销售统计
+        data.put("totalSales", orderRepository.getTotalSales() != null ? orderRepository.getTotalSales() : 0.0);
+        data.put("todaySales", getSalesForPeriod("today"));
+        data.put("weekSales", getSalesForPeriod("week"));
+        data.put("monthSales", getSalesForPeriod("month"));
+
+        // 订单统计
+        data.put("pendingOrders", orderRepository.countByStatus("PENDING"));
+        data.put("paidOrders", orderRepository.countByStatus("PAID"));
+        data.put("completedOrders", orderRepository.countByStatus("COMPLETED"));
+
+        // 用户统计
+        data.put("customerCount", userRepository.countByRole("CUSTOMER"));
+        data.put("salesCount", userRepository.countByRole("SALES"));
+
+        // 商品统计
+        data.put("productCount", productRepository.count());
+
+        // 今日浏览量
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        LocalDateTime todayEnd = LocalDate.now().atTime(LocalTime.MAX);
+        data.put("todayBrowseCount", browseLogRepository.countByBrowseTimeBetween(todayStart, todayEnd));
+
+        return data;
+    }
+
+    private double getSalesForPeriod(String period) {
+        LocalDateTime start;
+        LocalDateTime end = LocalDateTime.now();
+
+        switch (period) {
+            case "today":
+                start = LocalDate.now().atStartOfDay();
+                break;
+            case "week":
+                start = LocalDate.now().minusDays(7).atStartOfDay();
+                break;
+            case "month":
+                start = LocalDate.now().minusDays(30).atStartOfDay();
+                break;
+            default:
+                start = LocalDate.now().atStartOfDay();
+                break;
+        }
+        Double sales = orderRepository.getSalesByDateRange(start, end);
+        return sales != null ? sales : 0.0;
+    }
+}

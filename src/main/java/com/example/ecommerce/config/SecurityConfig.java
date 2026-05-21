@@ -12,34 +12,31 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // 密码加密器（Spring 容器管理）
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 安全过滤链：配置登录、权限、退出等规则
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 关闭CSRF（新手简化，生产环境需开启）
                 .csrf().disable()
-                // 配置请求权限
                 .authorizeHttpRequests(auth -> auth
-                        // 登录页、静态资源允许匿名访问
-                        .antMatchers("/login", "/css/**", "/js/**").permitAll()
+                        // 公开页面
+                        .antMatchers("/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
+                        // 销售人员和管理员页面
+                        .antMatchers("/sales/**").hasAnyRole("SALES", "ADMIN")
+                        .antMatchers("/admin/**").hasRole("ADMIN")
                         // 其他所有请求需要登录
                         .anyRequest().authenticated()
                 )
-                // 配置登录页面
                 .formLogin(form -> form
-                        .loginPage("/login") // 自定义登录页路径
-                        .defaultSuccessUrl("/products", true) // 登录成功后跳转到商品列表
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/products", true)
                         .permitAll()
                 )
-                // 配置退出登录
                 .logout(logout -> logout
-                        .logoutSuccessUrl("/login?logout") // 退出后跳回登录页
+                        .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 );
 

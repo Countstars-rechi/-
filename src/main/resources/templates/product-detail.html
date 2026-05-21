@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>商品详情 - 电商网站</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/products">电商网站</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/products">商品列表</a>
+                <a class="nav-link" href="/cart">购物车</a>
+                <a class="nav-link" href="/orders">我的订单</a>
+                <span class="nav-link text-light">欢迎，[[${username}]]</span>
+                <a class="nav-link text-light" href="/logout">退出</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-6">
+                <img th:src="${product.imageUrl}" class="img-fluid rounded" alt="${product.name}">
+            </div>
+            <div class="col-md-6">
+                <h2 th:text="${product.name}">商品名称</h2>
+                <p class="text-muted" th:text="${product.description}">描述</p>
+                <p class="text-danger h3" th:text="'¥' + ${product.price}">¥0.00</p>
+                <p th:if="${product.stock != null}">
+                    库存: <span class="badge bg-info" th:text="${product.stock}"></span>
+                </p>
+                <p th:if="${product.category != null}">
+                    分类: <span class="badge bg-secondary" th:text="${product.category}"></span>
+                </p>
+
+                <form th:action="@{/cart/add}" method="post" class="mt-3">
+                    <input type="hidden" name="productId" th:value="${product.id}">
+                    <div class="input-group mb-3" style="max-width: 300px;">
+                        <input type="number" name="quantity" class="form-control" value="1" min="1" max="10">
+                        <button type="submit" class="btn btn-primary">加入购物车</button>
+                    </div>
+                </form>
+
+                <a href="/products" class="btn btn-outline-secondary">返回商品列表</a>
+            </div>
+        </div>
+
+        <!-- 推荐商品 -->
+        <div th:if="${not #lists.isEmpty(recommendations)}" class="mt-5">
+            <h4>浏览过此商品的人也买了...</h4>
+            <div class="row mt-3">
+                <div th:each="rec : ${recommendations}" class="col-md-3 mb-3">
+                    <div class="card">
+                        <a th:href="@{/product/detail(id=${rec.id})}">
+                            <img th:src="${rec.imageUrl}" class="card-img-top" alt="${rec.name}" style="height:150px; object-fit:cover;">
+                        </a>
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <a th:href="@{/product/detail(id=${rec.id})}" class="text-decoration-none"
+                                   th:text="${rec.name}">商品</a>
+                            </h6>
+                            <p class="text-danger" th:text="'¥' + ${rec.price}">¥0.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

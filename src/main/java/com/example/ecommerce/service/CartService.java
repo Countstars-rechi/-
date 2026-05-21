@@ -22,13 +22,15 @@ public class CartService {
         this.userService = userService;
     }
 
-    // 加入购物车
+    // 供OrderService使用
+    public ProductService getProductService() {
+        return productService;
+    }
+
     public void addToCart(String username, Long productId, Integer quantity) {
-        // 获取当前用户和商品
         User user = userService.getCurrentUser(username);
         Product product = productService.getProductById(productId);
 
-        // 检查是否已加入购物车：已存在则更新数量，不存在则新增
         CartItem cartItem = cartItemRepository.findByUserAndProduct(user, product);
         if (cartItem != null) {
             cartItem.setQuantity(cartItem.getQuantity() + quantity);
@@ -41,18 +43,15 @@ public class CartService {
         cartItemRepository.save(cartItem);
     }
 
-    // 获取用户购物车
     public List<CartItem> getCartItems(String username) {
         User user = userService.getCurrentUser(username);
         return cartItemRepository.findByUser(user);
     }
 
-    // 删除购物车项
     public void removeCartItem(Long cartItemId) {
         cartItemRepository.deleteById(cartItemId);
     }
 
-    // 清空购物车（结算后调用）
     public void clearCart(String username) {
         User user = userService.getCurrentUser(username);
         List<CartItem> cartItems = cartItemRepository.findByUser(user);

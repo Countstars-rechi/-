@@ -14,12 +14,18 @@ public class Product {
     private Long id;
 
     @Column(nullable = false)
-    private String name; // 商品名称
+    private String name;
 
-    private String description; // 商品描述
+    private String description;
 
     @Column(nullable = false)
-    private BigDecimal price; // 商品价格
+    private BigDecimal price;
 
-    private String imageUrl; // 商品图片（用占位图）
+    private Integer stock;          // 库存数量
+
+    private String category;        // 商品类别（如：手机、平板、耳机等）
+
+    private String imageUrl;
+
+    private boolean enabled = true; // 是否上架
 }

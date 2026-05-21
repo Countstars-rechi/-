@@ -6,47 +6,86 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- 导航栏 -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="/products">电商网站</a>
             <div class="navbar-nav">
                 <a class="nav-link active" href="/products">商品列表</a>
-                <a class="nav-link" href="/cart">我的购物车</a>
+                <a class="nav-link" href="/cart">购物车</a>
+                <a class="nav-link" href="/orders">我的订单</a>
                 <span class="nav-link text-light">欢迎，[[${username}]]</span>
-                <a class="nav-link text-light" href="/logout">退出登录</a>
+                <a class="nav-link text-light" href="/logout">退出</a>
             </div>
         </div>
     </nav>
 
-    <!-- 结算成功提示 -->
     <div th:if="${param.checkout}" class="container mt-3">
-        <div class="alert alert-success">
-            结算成功！感谢您的购买！
-        </div>
+        <div class="alert alert-success">结算成功！感谢您的购买！</div>
     </div>
 
-    <!-- 商品列表 -->
     <div class="container mt-4">
-        <h2>商品列表</h2>
-        <div class="row mt-3">
-            <!-- 循环遍历商品 -->
-            <div th:each="product : ${products}" class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <img th:src="${product.imageUrl}" class="card-img-top" alt="${product.name}">
-                    <div class="card-body">
-                        <h5 class="card-title" th:text="${product.name}">商品名称</h5>
-                        <p class="card-text" th:text="${product.description}">商品描述</p>
-                        <p class="card-text text-danger fw-bold" th:text="'¥' + ${product.price}">¥0.00</p>
-                        <!-- 加入购物车表单 -->
-                        <form th:action="@{/cart/add}" method="post">
-                            <input type="hidden" name="productId" th:value="${product.id}">
-                            <div class="input-group mb-3">
-                                <input type="number" name="quantity" class="form-control" value="1" min="1" max="10">
-                                <button type="submit" class="btn btn-primary">加入购物车</button>
-                            </div>
-                        </form>
+        <div class="row">
+            <!-- 侧边栏：分类 -->
+            <div class="col-md-2">
+                <h5>商品分类</h5>
+                <ul class="list-group">
+                    <li class="list-group-item" th:classappend="${selectedCategory == null and keyword == null} ? 'active' : ''">
+                        <a href="/products" class="text-decoration-none">全部商品</a>
+                    </li>
+                    <li class="list-group-item" th:each="cat : ${categories}"
+                        th:classappend="${selectedCategory == cat} ? 'active' : ''">
+                        <a th:href="@{/products(category=${cat})}" class="text-decoration-none" th:text="${cat}">分类</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 主内容 -->
+            <div class="col-md-10">
+                <!-- 搜索栏 -->
+                <form class="mb-3" th:action="@{/products}" method="get">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="keyword" placeholder="搜索商品..."
+                               th:value="${keyword}">
+                        <button class="btn btn-primary" type="submit">搜索</button>
                     </div>
+                </form>
+
+                <h2>
+                    商品列表
+                    <span th:if="${selectedCategory}" class="text-muted small" th:text="' - ' + ${selectedCategory}"></span>
+                    <span th:if="${keyword}" class="text-muted small" th:text="' - 搜索: ' + ${keyword}"></span>
+                </h2>
+
+                <div class="row mt-3">
+                    <div th:each="product : ${products}" class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <a th:href="@{/product/detail(id=${product.id})}">
+                                <img th:src="${product.imageUrl}" class="card-img-top" alt="${product.name}" style="height:200px; object-fit:cover;">
+                            </a>
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <a th:href="@{/product/detail(id=${product.id})}" class="text-decoration-none"
+                                       th:text="${product.name}">商品名称</a>
+                                </h5>
+                                <p class="card-text text-muted small" th:text="${product.description}">描述</p>
+                                <p class="card-text text-danger fw-bold" th:text="'¥' + ${product.price}">¥0.00</p>
+                                <p class="card-text text-muted small" th:if="${product.stock != null}">
+                                    库存: <span th:text="${product.stock}"></span>
+                                </p>
+                                <form th:action="@{/cart/add}" method="post">
+                                    <input type="hidden" name="productId" th:value="${product.id}">
+                                    <div class="input-group">
+                                        <input type="number" name="quantity" class="form-control" value="1" min="1" max="10">
+                                        <button type="submit" class="btn btn-primary">加入购物车</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(products)}" class="alert alert-info">
+                    暂无商品
                 </div>
             </div>
         </div>
