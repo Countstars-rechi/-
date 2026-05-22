@@ -90,12 +90,6 @@
         });
 
         // 排行榜
-        var rankingNames = [];
-        var rankingData = [];
-        <th:block th:each="r : ${ranking}">
-        rankingNames.push([[${r.productName}]]);
-        rankingData.push([[${r.totalSold}]]);
-        </th:block>
         var rankChart = echarts.init(document.getElementById('rankingChart'));
         rankChart.setOption({
             tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
@@ -103,33 +97,27 @@
             xAxis: { type: 'value' },
             yAxis: {
                 type: 'category',
-                data: rankingNames.reverse()
+                data: [[${ranking.![productName]}]].reverse()
             },
             series: [{
                 type: 'bar',
-                data: rankingData.reverse(),
+                data: [[${ranking.![totalSold]}]].reverse(),
                 itemStyle: { color: '#198754' }
             }]
         });
 
         // 类别销售
-        var catNames = [];
-        var catData = [];
-        <th:block th:each="cs : ${categorySales}">
-        catNames.push([[${cs[0]}]]);
-        catData.push([[${cs[1]}]]);
-        </th:block>
         var catChart = echarts.init(document.getElementById('categoryChart'));
         catChart.setOption({
             tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
             xAxis: {
                 type: 'category',
-                data: catNames
+                data: [[${categorySales.![_[0]]}]]
             },
             yAxis: { type: 'value', name: '销量' },
             series: [{
                 type: 'bar',
-                data: catData,
+                data: [[${categorySales.![_[1]]}]],
                 itemStyle: { color: '#198754' }
             }]
         });
