@@ -7,20 +7,23 @@ services:
     container_name: ecommerce-mysql
     restart: always
     environment:
-      # 数据库根密码
       MYSQL_ROOT_PASSWORD: root123
-      # 自动创建数据库
       MYSQL_DATABASE: ecommerce_db
-      # 字符集配置
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
     ports:
       - "3306:3306"
     volumes:
-      # 持久化数据（容器删除后数据不丢失）
       - mysql-data:/var/lib/mysql
     networks:
       - ecommerce-network
+    # 内存限制（4GB 服务器，MySQL 预留 1GB）
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+        reservations:
+          memory: 512m
 
   # Spring Boot 应用服务
   app:
@@ -30,15 +33,20 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # 重点：添加此环境变量解决 MySQL 8.0 公钥检索拒绝问题
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ecommerce_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root123
-    # 依赖 MySQL 服务，确保先启动 MySQL
     depends_on:
       - mysql
     networks:
       - ecommerce-network
+    # 内存限制（JVM 已在 Dockerfile 中限制 512MB，容器上限 768MB）
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+        reservations:
+          memory: 256m
 
 # 网络配置（让两个容器在同一网络，可互相访问）
 networks:

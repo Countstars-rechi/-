@@ -16,5 +16,5 @@ WORKDIR /app
 COPY --from=build /app/target/ecommerce-1.0.0.jar app.jar
 # 暴露端口（与 application.properties 中的 server.port 一致）
 EXPOSE 8080
-# 启动命令
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# 启动命令（JVM 内存上限 512MB，适配 4GB 云服务器）
+ENTRYPOINT ["sh", "-c", "java -Xms256m -Xmx512m -XX:+UseG1GC -jar app.jar"]
