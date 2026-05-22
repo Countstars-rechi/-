@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>个人中心 - 电商网站</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <th:block th:replace="fragments/navbar :: customerLoggedIn('profile')"></th:block>
+
+    <div class="container mt-4">
+        <h2>个人中心</h2>
+
+        <div th:if="${param.updated}" class="alert alert-success mt-3">个人信息已更新</div>
+        <div th:if="${param.pwchanged}" class="alert alert-success mt-3">密码已修改</div>
+        <div th:if="${param.pwerror}" class="alert alert-danger mt-3">原密码错误</div>
+
+        <div class="row mt-4">
+            <!-- 基本信息 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header"><h5>基本信息</h5></div>
+                    <div class="card-body">
+                        <form th:action="@{/profile/edit}" method="post">
+                            <div class="mb-3">
+                                <label class="form-label">用户名</label>
+                                <input type="text" class="form-control" th:value="${user.username}" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label for="fullName" class="form-label">姓名/昵称</label>
+                                <input type="text" class="form-control" id="fullName" name="fullName" th:value="${user.fullName}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">邮箱</label>
+                                <input type="email" class="form-control" id="email" name="email" th:value="${user.email}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">电话</label>
+                                <input type="text" class="form-control" id="phone" name="phone" th:value="${user.phone}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="region" class="form-label">地域</label>
+                                <select class="form-select" id="region" name="region">
+                                    <option value="">请选择</option>
+                                    <option value="北京" th:selected="${user.region == '北京'}">北京</option>
+                                    <option value="上海" th:selected="${user.region == '上海'}">上海</option>
+                                    <option value="广州" th:selected="${user.region == '广州'}">广州</option>
+                                    <option value="深圳" th:selected="${user.region == '深圳'}">深圳</option>
+                                    <option value="杭州" th:selected="${user.region == '杭州'}">杭州</option>
+                                    <option value="成都" th:selected="${user.region == '成都'}">成都</option>
+                                    <option value="其他" th:selected="${user.region == '其他'}">其他</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">注册时间</label>
+                                <input type="text" class="form-control" th:value="${user.createdAt}" disabled>
+                            </div>
+                            <button type="submit" class="btn btn-primary">保存修改</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 修改密码 & 账号信息 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header"><h5>修改密码</h5></div>
+                    <div class="card-body">
+                        <form th:action="@{/profile/change-password}" method="post">
+                            <div class="mb-3">
+                                <label for="oldPassword" class="form-label">原密码</label>
+                                <input type="password" class="form-control" id="oldPassword" name="oldPassword" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="newPassword" class="form-label">新密码</label>
+                                <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="6">
+                            </div>
+                            <button type="submit" class="btn btn-warning">修改密码</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header"><h5>账号信息</h5></div>
+                    <div class="card-body">
+                        <p><strong>角色：</strong>
+                            <span class="badge bg-primary" th:text="${user.role == 'CUSTOMER' ? '普通用户' : (user.role == 'ADMIN' ? '管理员' : '销售人员')}"></span>
+                        </p>
+                        <p><strong>最后登录时间：</strong><span th:text="${user.lastLoginAt}">-</span></p>
+                        <p><strong>最后登录IP：</strong><span th:text="${user.lastLoginIp}">-</span></p>
+                        <a href="/orders" class="btn btn-outline-primary">查看我的订单</a>
+                        <a href="/cart" class="btn btn-outline-secondary ms-2">查看购物车</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

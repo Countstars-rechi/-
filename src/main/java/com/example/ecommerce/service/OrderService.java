@@ -255,7 +255,6 @@ public class OrderService {
         return counts;
     }
 
-    // 取消订单（含库存恢复）
     @Transactional
     public Order cancelOrder(Long orderId) {
         Order order = orderRepository.findById(orderId)
@@ -279,6 +278,34 @@ public class OrderService {
             }
         }
 
+        return orderRepository.save(order);
+    }
+
+    // 发货
+    @Transactional
+    public Order shipOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("订单不存在"));
+
+        if (!"PAID".equals(order.getStatus())) {
+            throw new RuntimeException("只有已付款的订单才能发货");
+        }
+
+        order.setStatus("SHIPPED");
+        return orderRepository.save(order);
+    }
+
+    // 完成订单
+    @Transactional
+    public Order completeOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("订单不存在"));
+
+        if (!"SHIPPED".equals(order.getStatus())) {
+            throw new RuntimeException("只有已发货的订单才能确认完成");
+        }
+
+        order.setStatus("COMPLETED");
         return orderRepository.save(order);
     }
 

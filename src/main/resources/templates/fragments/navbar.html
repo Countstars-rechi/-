@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 顾客导航栏（支持未登录/已登录切换） -->
+<nav th:fragment="customer(active)" class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/products">电商网站</a>
+        <div class="navbar-nav">
+            <a class="nav-link" th:classappend="${active == 'products'} ? 'active'" href="/products">商品列表</a>
+            <th:block th:if="${username != null}">
+                <a class="nav-link" th:classappend="${active == 'cart'} ? 'active'" href="/cart">购物车</a>
+                <a class="nav-link" th:classappend="${active == 'orders'} ? 'active'" href="/orders">我的订单</a>
+            <a class="nav-link" th:classappend="${active == 'profile'} ? 'active'" href="/profile">个人中心</a>
+                <span class="nav-link text-light">欢迎，[[${username}]]</span>
+                <a class="nav-link text-light" href="/logout">退出</a>
+            </th:block>
+            <th:block th:unless="${username != null}">
+                <a class="nav-link" href="/login">登录</a>
+                <a class="nav-link" href="/register">注册</a>
+            </th:block>
+        </div>
+    </div>
+</nav>
+
+<!-- 顾客导航栏（仅已登录，用于购物车/订单/结算等必须登录的页面） -->
+<nav th:fragment="customerLoggedIn(active)" class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/products">电商网站</a>
+        <div class="navbar-nav">
+            <a class="nav-link" th:classappend="${active == 'products'} ? 'active'" href="/products">商品列表</a>
+            <a class="nav-link" th:classappend="${active == 'cart'} ? 'active'" href="/cart">购物车</a>
+            <a class="nav-link" th:classappend="${active == 'orders'} ? 'active'" href="/orders">我的订单</a>
+            <a class="nav-link" th:classappend="${active == 'profile'} ? 'active'" href="/profile">个人中心</a>
+            <span class="nav-link text-light">欢迎，[[${username}]]</span>
+            <a class="nav-link text-light" href="/logout">退出</a>
+        </div>
+    </div>
+</nav>
+
+<!-- 销售员导航栏 -->
+<nav th:fragment="sales(active)" class="navbar navbar-expand-lg navbar-dark bg-success">
+    <div class="container">
+        <a class="navbar-brand" href="/sales/dashboard">销售管理</a>
+        <div class="navbar-nav">
+            <a class="nav-link" th:classappend="${active == 'dashboard'} ? 'active'" href="/sales/dashboard">仪表盘</a>
+            <a class="nav-link" th:classappend="${active == 'products'} ? 'active'" href="/sales/products">商品管理</a>
+            <a class="nav-link" th:classappend="${active == 'orders'} ? 'active'" href="/sales/orders">订单管理</a>
+            <a class="nav-link" th:classappend="${active == 'statistics'} ? 'active'" href="/sales/statistics">销售统计</a>
+            <a class="nav-link" th:classappend="${active == 'browse-logs'} ? 'active'" href="/sales/browse-logs">浏览日志</a>
+            <a class="nav-link" th:classappend="${active == 'categories'} ? 'active'" href="/sales/categories">分类管理</a>
+            <span class="nav-link text-light">[[${username}]]</span>
+            <a class="nav-link text-light" href="/products">前台</a>
+            <a class="nav-link text-light" href="/logout">退出</a>
+        </div>
+    </div>
+</nav>
+
+<!-- 管理员导航栏 -->
+<nav th:fragment="admin(active)" class="navbar navbar-expand-lg navbar-dark bg-danger">
+    <div class="container">
+        <a class="navbar-brand" href="/admin/dashboard">系统管理</a>
+        <div class="navbar-nav">
+            <a class="nav-link" th:classappend="${active == 'dashboard'} ? 'active'" href="/admin/dashboard">仪表盘</a>
+            <a class="nav-link" th:classappend="${active == 'sales-users'} ? 'active'" href="/admin/sales-users">销售人员管理</a>
+            <a class="nav-link" th:classappend="${active == 'sales-performance'} ? 'active'" href="/admin/sales-performance">销售业绩</a>
+            <a class="nav-link" th:classappend="${active == 'operation-logs'} ? 'active'" href="/admin/operation-logs">操作日志</a>
+            <a class="nav-link" th:classappend="${active == 'user-profile'} ? 'active'" href="/admin/user-profile">用户画像</a>
+            <span class="nav-link text-light">[[${username}]]</span>
+            <a class="nav-link text-light" href="/products">前台</a>
+            <a class="nav-link text-light" href="/logout">退出</a>
+        </div>
+    </div>
+</nav>
+
+</body>
+</html>

@@ -6,6 +6,7 @@ import com.example.ecommerce.service.AnalysisService;
 import com.example.ecommerce.service.LogService;
 import com.example.ecommerce.service.ProductService;
 import com.example.ecommerce.service.UserService;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -37,16 +38,19 @@ public class ProductController {
     public String productList(Model model, Authentication authentication,
                               @RequestParam(name = "category", required = false) String category,
                               @RequestParam(name = "keyword", required = false) String keyword,
+                              @RequestParam(name = "page", defaultValue = "0") int page,
                               HttpServletRequest request) {
-        List<Product> products;
+        int pageSize = 9;
+        Page<Product> productPage;
+
         if (keyword != null && !keyword.isEmpty()) {
-            products = productService.searchProducts(keyword);
+            productPage = productService.searchProductsPaged(keyword, page, pageSize);
             model.addAttribute("keyword", keyword);
         } else if (category != null && !category.isEmpty()) {
-            products = productService.getProductsByCategory(category);
+            productPage = productService.getProductsByCategoryPaged(category, page, pageSize);
             model.addAttribute("selectedCategory", category);
         } else {
-            products = productService.getAllProducts();
+            productPage = productService.getProductsPaged(page, pageSize);
         }
 
         // 已登录用户记录浏览日志
@@ -57,7 +61,10 @@ public class ProductController {
             model.addAttribute("username", username);
         }
 
-        model.addAttribute("products", products);
+        model.addAttribute("products", productPage.getContent());
+        model.addAttribute("totalPages", productPage.getTotalPages());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalElements", productPage.getTotalElements());
         model.addAttribute("categories", productService.getAllCategories());
 
         return "products";
@@ -75,8 +82,9 @@ public class ProductController {
             logService.logBrowse(user, product, product.getCategory(), 30, request);
             model.addAttribute("username", username);
 
-            // 获取推荐商品
-            List<Product> recommendations = analysisService.getRecommendations(id, 4);
+            // 协同过滤推荐（登录用户优先用UserCF，冷启动回退到物品推荐）
+            List<Product> recommendations = analysisService.getCFRecommendations(
+                    user.getId(), id, 4);
             model.addAttribute("recommendations", recommendations);
         }
 

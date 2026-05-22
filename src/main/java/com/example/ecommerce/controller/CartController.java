@@ -33,6 +33,16 @@ public class CartController {
         return "redirect:/products";
     }
 
+    @PostMapping("/buy-now")
+    public String buyNow(
+            @RequestParam Long productId,
+            @RequestParam(defaultValue = "1") Integer quantity,
+            Authentication authentication) {
+        String username = authentication.getName();
+        cartService.addToCart(username, productId, quantity);
+        return "redirect:/cart/checkout";
+    }
+
     @GetMapping
     public String viewCart(Model model, Authentication authentication) {
         String username = authentication.getName();

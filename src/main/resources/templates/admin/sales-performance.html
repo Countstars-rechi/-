@@ -4,23 +4,10 @@
     <meta charset="UTF-8">
     <title>销售业绩 - 电商网站</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-danger">
-        <div class="container">
-            <a class="navbar-brand" href="/admin/dashboard">系统管理</a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="/admin/dashboard">仪表盘</a>
-                <a class="nav-link" href="/admin/sales-users">销售人员管理</a>
-                <a class="nav-link active" href="/admin/sales-performance">销售业绩</a>
-                <a class="nav-link" href="/admin/operation-logs">操作日志</a>
-                <a class="nav-link" href="/admin/user-profile">用户画像</a>
-                <span class="nav-link text-light">[[${username}]]</span>
-                <a class="nav-link text-light" href="/products">前台</a>
-                <a class="nav-link text-light" href="/logout">退出</a>
-            </div>
-        </div>
-    </nav>
+    <th:block th:replace="fragments/navbar :: admin('sales-performance')"></th:block>
 
     <div class="container mt-4">
         <h2>销售业绩</h2>
@@ -60,87 +47,83 @@
             </div>
         </div>
 
+        <!-- 趋势图 + 排名图 -->
         <div class="row mt-4">
-            <div class="col-md-6">
+            <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">
-                        <h5>商品销售排行榜</h5>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>排名</th>
-                                    <th>商品</th>
-                                    <th>类别</th>
-                                    <th>销量</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="item : ${ranking}">
-                                    <td th:text="${item.rank}">1</td>
-                                    <td th:text="${item.productName}">商品</td>
-                                    <td th:text="${item.category}">类别</td>
-                                    <td th:text="${item.totalSold}">0</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="card-header"><h5>销售趋势（近30天）</h5></div>
+                    <div class="card-body"><div id="trendChart" style="height:350px;"></div></div>
                 </div>
             </div>
-
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card">
-                    <div class="card-header">
-                        <h5>订单状态统计</h5>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>状态</th>
-                                    <th>数量</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="entry : ${orderStatusCount}">
-                                    <td th:text="${entry.key == 'PENDING' ? '待付款' : 
-                                        (entry.key == 'PAID' ? '已付款' : 
-                                        (entry.key == 'COMPLETED' ? '已完成' : '已取消'))}">状态</td>
-                                    <td th:text="${entry.value}">0</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="card-header"><h5>订单状态统计</h5></div>
+                    <div class="card-body"><div id="statusPieChart" style="height:350px;"></div></div>
                 </div>
             </div>
         </div>
 
+        <!-- 排行榜 -->
         <div class="row mt-4">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5>销售趋势（近30天）</h5>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>日期</th>
-                                    <th>销售额</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="i : ${#numbers.sequence(0, #lists.size(trend.dates) - 1)}">
-                                    <td th:text="${trend.dates[i]}">日期</td>
-                                    <td th:text="'¥' + ${#numbers.formatDecimal(trend.sales[i], 1, 2)}">¥0</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="card-header"><h5>商品销售排行榜</h5></div>
+                    <div class="card-body"><div id="rankingChart" style="height:400px;"></div></div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script th:inline="javascript">
+        // 趋势图
+        var trendChart = echarts.init(document.getElementById('trendChart'));
+        trendChart.setOption({
+            tooltip: { trigger: 'axis' },
+            dataZoom: [{ type: 'slider', start: 50, end: 100 }],
+            xAxis: { type: 'category', data: [[${trend.dates}]] },
+            yAxis: { type: 'value', name: '销售额 (¥)' },
+            series: [{
+                name: '销售额', type: 'line', smooth: true,
+                data: [[${trend.sales}]],
+                areaStyle: { opacity: 0.1 },
+                itemStyle: { color: '#dc3545' }
+            }]
+        });
+
+        // 订单状态饼图
+        var pieChart = echarts.init(document.getElementById('statusPieChart'));
+        pieChart.setOption({
+            tooltip: { trigger: 'item' },
+            legend: { bottom: 0 },
+            series: [{
+                type: 'pie',
+                radius: ['35%', '65%'],
+                data: [
+                    { value: [[${orderStatusCount['PENDING'] ?: 0}]], name: '待付款', itemStyle: { color: '#ffc107' } },
+                    { value: [[${orderStatusCount['PAID'] ?: 0}]], name: '已付款', itemStyle: { color: '#0d6efd' } },
+                    { value: [[${orderStatusCount['SHIPPED'] ?: 0}]], name: '已发货', itemStyle: { color: '#6f42c1' } },
+                    { value: [[${orderStatusCount['COMPLETED'] ?: 0}]], name: '已完成', itemStyle: { color: '#198754' } },
+                    { value: [[${orderStatusCount['CANCELLED'] ?: 0}]], name: '已取消', itemStyle: { color: '#6c757d' } }
+                ]
+            }]
+        });
+
+        // 排行榜
+        var rankChart = echarts.init(document.getElementById('rankingChart'));
+        rankChart.setOption({
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+            grid: { left: '20%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'value', name: '销量' },
+            yAxis: {
+                type: 'category',
+                data: [[${#lists.toList(ranking).![productName + ' (¥' + price + ')']}]].reverse()
+            },
+            series: [{
+                type: 'bar',
+                data: [[${#lists.toList(ranking).![totalSold]}]].reverse(),
+                itemStyle: { color: '#dc3545' }
+            }]
+        });
+    </script>
 </body>
 </html>

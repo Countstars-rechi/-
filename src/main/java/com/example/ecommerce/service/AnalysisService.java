@@ -242,13 +242,113 @@ public class AnalysisService {
             }
         }
 
-        // 按购买次数排序
         return productCount.entrySet().stream()
                 .sorted(Map.Entry.<Long, Long>comparingByValue().reversed())
                 .limit(limit)
                 .map(entry -> productRepository.findById(entry.getKey()).orElse(null))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+
+    // ========== 协同过滤推荐（UserCF） ==========
+
+    /**
+     * 基于用户的协同过滤推荐（UserCF）
+     * 1. 构建用户-商品购买矩阵
+     * 2. 计算目标用户与其他用户的余弦相似度
+     * 3. 基于相似用户的购买行为生成推荐
+     * 冷启动：新用户或无购买记录用户回退到简单推荐
+     */
+    public List<Product> getCFRecommendations(Long userId, Long productId, int limit) {
+        List<Order> allOrders = orderRepository.findAllByOrderByCreatedAtDesc();
+
+        // 构建用户-商品矩阵
+        Map<Long, Map<Long, Double>> userProductMatrix = new HashMap<>();
+        for (Order order : allOrders) {
+            if ("CANCELLED".equals(order.getStatus())) continue;
+            Long uid = order.getUser().getId();
+            userProductMatrix.putIfAbsent(uid, new HashMap<>());
+            for (OrderItem item : order.getOrderItems()) {
+                Long pid = item.getProduct().getId();
+                userProductMatrix.get(uid).merge(pid, (double) item.getQuantity(), Double::sum);
+            }
+        }
+
+        Map<Long, Double> targetVector = userProductMatrix.getOrDefault(userId, new HashMap<>());
+
+        // 冷启动：用户无购买记录，回退到简单推荐
+        if (targetVector.isEmpty() && productId != null) {
+            return getRecommendations(productId, limit);
+        }
+
+        // 计算与其他用户的余弦相似度
+        Map<Long, Double> similarities = new HashMap<>();
+        for (Map.Entry<Long, Map<Long, Double>> entry : userProductMatrix.entrySet()) {
+            Long otherUserId = entry.getKey();
+            if (otherUserId.equals(userId)) continue;
+            double sim = cosineSimilarity(targetVector, entry.getValue());
+            if (sim > 0) {
+                similarities.put(otherUserId, sim);
+            }
+        }
+
+        // 按相似度排序，取前20个相似用户
+        List<Long> similarUsers = similarities.entrySet().stream()
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+                .limit(20)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        // 统计推荐商品：相似用户买过但目标用户没买过的商品
+        Map<Long, Double> scores = new HashMap<>();
+        for (Long suid : similarUsers) {
+            double sim = similarities.get(suid);
+            Map<Long, Double> vector = userProductMatrix.get(suid);
+            for (Map.Entry<Long, Double> e : vector.entrySet()) {
+                Long pid = e.getKey();
+                if (!targetVector.containsKey(pid)) {
+                    scores.merge(pid, sim * e.getValue(), Double::sum);
+                }
+            }
+        }
+
+        List<Product> cfResults = scores.entrySet().stream()
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+                .limit(limit)
+                .map(e -> productRepository.findById(e.getKey()).orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        // 协同过滤结果不足时用简单推荐补充
+        if (cfResults.size() < limit && productId != null) {
+            List<Product> fallback = getRecommendations(productId, limit - cfResults.size());
+            for (Product p : fallback) {
+                if (!cfResults.contains(p)) {
+                    cfResults.add(p);
+                }
+            }
+        }
+
+        return cfResults;
+    }
+
+    /**
+     * 余弦相似度
+     */
+    private double cosineSimilarity(Map<Long, Double> a, Map<Long, Double> b) {
+        if (a.isEmpty() || b.isEmpty()) return 0;
+        double dotProduct = 0, normA = 0, normB = 0;
+        Set<Long> allKeys = new HashSet<>(a.keySet());
+        allKeys.addAll(b.keySet());
+        for (Long key : allKeys) {
+            double va = a.getOrDefault(key, 0.0);
+            double vb = b.getOrDefault(key, 0.0);
+            dotProduct += va * vb;
+            normA += va * va;
+            normB += vb * vb;
+        }
+        double denominator = Math.sqrt(normA) * Math.sqrt(normB);
+        return denominator == 0 ? 0 : dotProduct / denominator;
     }
 
     // ========== 仪表盘数据 ==========

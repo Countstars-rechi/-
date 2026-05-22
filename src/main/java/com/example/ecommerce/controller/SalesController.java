@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Controller
@@ -120,6 +122,67 @@ public class SalesController {
         model.addAttribute("orders", orderService.getAllOrders());
         model.addAttribute("username", authentication.getName());
         return "sales/orders";
+    }
+
+    // 发货
+    @PostMapping("/orders/{id}/ship")
+    public String shipOrder(@PathVariable Long id, Authentication authentication,
+                             HttpServletRequest request) {
+        try {
+            orderService.shipOrder(id);
+            Order order = orderService.getOrderById(id);
+            logService.logOperation(authentication.getName(), "SALES",
+                    "发货订单: " + order.getOrderNo(), request);
+            return "redirect:/sales/orders?shipped";
+        } catch (Exception e) {
+            return "redirect:/sales/orders?error=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+        }
+    }
+
+    // 完成订单
+    @PostMapping("/orders/{id}/complete")
+    public String completeOrder(@PathVariable Long id, Authentication authentication,
+                                 HttpServletRequest request) {
+        try {
+            orderService.completeOrder(id);
+            Order order = orderService.getOrderById(id);
+            logService.logOperation(authentication.getName(), "SALES",
+                    "完成订单: " + order.getOrderNo(), request);
+            return "redirect:/sales/orders?completed";
+        } catch (Exception e) {
+            return "redirect:/sales/orders?error=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+        }
+    }
+
+    // 分类管理
+    @GetMapping("/categories")
+    public String categories(Model model, Authentication authentication) {
+        model.addAttribute("username", authentication.getName());
+        model.addAttribute("categories", productService.getAllCategories());
+        return "sales/categories";
+    }
+
+    @PostMapping("/categories/add")
+    public String addCategory(@RequestParam String categoryName,
+                               Authentication authentication,
+                               HttpServletRequest request) {
+        logService.logOperation(authentication.getName(), "SALES",
+                "添加分类: " + categoryName, request);
+        return "redirect:/sales/categories?added&name=" + URLEncoder.encode(categoryName, StandardCharsets.UTF_8);
+    }
+
+    @GetMapping("/categories/delete")
+    public String deleteCategory(@RequestParam String category,
+                                  Authentication authentication,
+                                  HttpServletRequest request) {
+        List<Product> products = productService.getProductsByCategory(category);
+        if (!products.isEmpty()) {
+            return "redirect:/sales/categories?error=" + URLEncoder.encode(
+                    "该分类下还有 " + products.size() + " 个商品，无法删除", StandardCharsets.UTF_8);
+        }
+        logService.logOperation(authentication.getName(), "SALES",
+                "删除分类: " + category, request);
+        return "redirect:/sales/categories?deleted";
     }
 
     // 销售统计
