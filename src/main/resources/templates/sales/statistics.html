@@ -113,12 +113,12 @@
             tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
             xAxis: {
                 type: 'category',
-                data: [[${categorySales.![_[0]]}]]
+                data: [[${catNames}]]
             },
             yAxis: { type: 'value', name: '销量' },
             series: [{
                 type: 'bar',
-                data: [[${categorySales.![_[1]]}]],
+                data: [[${catCounts}]],
                 itemStyle: { color: '#198754' }
             }]
         });

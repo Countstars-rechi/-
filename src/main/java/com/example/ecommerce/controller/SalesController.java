@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -196,7 +197,16 @@ public class SalesController {
         model.addAttribute("monthSales", orderService.getMonthSales());
         model.addAttribute("trend", analysisService.getSalesTrend("week"));
         model.addAttribute("ranking", analysisService.getProductRanking("all"));
-        model.addAttribute("categorySales", orderService.getSalesByCategory("month"));
+
+        List<Object[]> categorySales = orderService.getSalesByCategory("month");
+        List<String> catNames = new ArrayList<>();
+        List<Long> catCounts = new ArrayList<>();
+        for (Object[] cs : categorySales) {
+            catNames.add((String) cs[0]);
+            catCounts.add(((Number) cs[1]).longValue());
+        }
+        model.addAttribute("catNames", catNames);
+        model.addAttribute("catCounts", catCounts);
         return "sales/statistics";
     }
 
