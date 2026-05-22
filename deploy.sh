@@ -13,22 +13,27 @@ echo "========================================="
 
 # 1. 拉取最新代码
 echo ""
-echo "[1/4] 拉取最新代码..."
+echo "[1/5] 拉取最新代码..."
 git pull origin main
 
-# 2. 停止并移除旧容器
+# 2. Maven 编译（使用宿主机缓存，仅首次慢）
 echo ""
-echo "[2/4] 停止旧容器..."
+echo "[2/5] Maven 编译..."
+mvn clean package -DskipTests -q
+
+# 3. 停止并移除旧容器
+echo ""
+echo "[3/5] 停止旧容器..."
 docker-compose down
 
-# 3. 重新构建镜像并后台启动
+# 4. 重新构建镜像并后台启动
 echo ""
-echo "[3/4] 构建镜像并启动容器..."
+echo "[4/5] 构建镜像并启动容器..."
 docker-compose up -d --build
 
-# 4. 清理无用的 Docker 镜像（释放磁盘空间）
+# 5. 清理无用镜像
 echo ""
-echo "[4/4] 清理无用镜像..."
+echo "[5/5] 清理无用镜像..."
 docker image prune -f
 
 # 显示状态
