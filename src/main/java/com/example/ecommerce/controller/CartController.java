@@ -8,6 +8,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 @Controller
 @RequestMapping("/cart")
 public class CartController {
@@ -67,7 +70,7 @@ public class CartController {
                     receiverName, receiverPhone);
             return "redirect:/orders/" + order.getId() + "?success";
         } catch (Exception e) {
-            return "redirect:/cart/checkout?error=" + e.getMessage();
+            return "redirect:/cart/checkout?error=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
         }
     }
 }

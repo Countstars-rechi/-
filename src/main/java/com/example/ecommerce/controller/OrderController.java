@@ -7,6 +7,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Controller
@@ -53,7 +55,7 @@ public class OrderController {
             orderService.cancelOrder(id);
             return "redirect:/orders/" + id + "?cancelled";
         } catch (Exception e) {
-            return "redirect:/orders/" + id + "?error=" + e.getMessage();
+            return "redirect:/orders/" + id + "?error=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
         }
     }
 }

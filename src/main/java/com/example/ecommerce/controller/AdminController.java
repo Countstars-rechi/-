@@ -8,6 +8,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Controller
 @RequestMapping("/admin")
@@ -66,7 +68,7 @@ public class AdminController {
                     "添加销售人员: " + username, request);
             return "redirect:/admin/sales-users?added";
         } catch (Exception e) {
-            return "redirect:/admin/sales-users/add?error=" + e.getMessage();
+            return "redirect:/admin/sales-users/add?error=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
         }
     }
 
