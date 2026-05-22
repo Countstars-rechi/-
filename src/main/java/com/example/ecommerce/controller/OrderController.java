@@ -45,4 +45,15 @@ public class OrderController {
         orderService.payOrder(id);
         return "redirect:/orders/" + id + "?paid";
     }
+
+    // 取消订单
+    @PostMapping("/{id}/cancel")
+    public String cancelOrder(@PathVariable Long id) {
+        try {
+            orderService.cancelOrder(id);
+            return "redirect:/orders/" + id + "?cancelled";
+        } catch (Exception e) {
+            return "redirect:/orders/" + id + "?error=" + e.getMessage();
+        }
+    }
 }

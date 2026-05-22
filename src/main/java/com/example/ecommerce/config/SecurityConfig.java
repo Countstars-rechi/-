@@ -22,8 +22,9 @@ public class SecurityConfig {
         http
                 .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
-                        // 公开页面
-                        .antMatchers("/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
+                        // 公开页面（未登录也可访问）
+                        .antMatchers("/login", "/register", "/products", "/product/detail",
+                                     "/css/**", "/js/**", "/images/**").permitAll()
                         // 销售人员和管理员页面
                         .antMatchers("/sales/**").hasAnyRole("SALES", "ADMIN")
                         .antMatchers("/admin/**").hasRole("ADMIN")

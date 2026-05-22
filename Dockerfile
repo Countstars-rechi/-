@@ -1,5 +1,5 @@
 # 阶段1：构建 Jar 包（多阶段构建，减小镜像体积）
-FROM maven:3.8.5-openjdk-8 AS build
+FROM maven:3.8.5-openjdk-17 AS build
 # 设置工作目录
 WORKDIR /app
 # 复制 pom.xml 和源码
@@ -9,7 +9,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # 阶段2：运行 Jar 包
-FROM openjdk:8-jdk-alpine
+FROM openjdk:17-jdk-alpine
 # 设置工作目录
 WORKDIR /app
 # 从构建阶段复制 Jar 包到当前镜像

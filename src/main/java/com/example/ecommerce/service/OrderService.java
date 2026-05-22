@@ -19,15 +19,18 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final CartService cartService;
     private final UserService userService;
+    private final EmailService emailService;
 
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
                         CartService cartService,
-                        UserService userService) {
+                        UserService userService,
+                        EmailService emailService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.cartService = cartService;
         this.userService = userService;
+        this.emailService = emailService;
     }
 
     // 从购物车创建订单（结算）
@@ -54,14 +57,27 @@ public class OrderService {
         List<OrderItem> orderItems = new ArrayList<>();
 
         for (CartItem cartItem : cartItems) {
+            Product product = cartItem.getProduct();
+            int qty = cartItem.getQuantity();
+
+            // 库存校验
+            if (product.getStock() != null && product.getStock() < qty) {
+                throw new RuntimeException("商品 [" + product.getName() + "] 库存不足，当前库存: " + product.getStock());
+            }
+
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
-            orderItem.setProduct(cartItem.getProduct());
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setPrice(cartItem.getProduct().getPrice());
-            total = total.add(cartItem.getProduct().getPrice()
-                    .multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+            orderItem.setProduct(product);
+            orderItem.setQuantity(qty);
+            orderItem.setPrice(product.getPrice());
+            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(qty)));
             orderItems.add(orderItem);
+
+            // 扣减库存
+            if (product.getStock() != null) {
+                product.setStock(product.getStock() - qty);
+                cartService.getProductService().saveProduct(product);
+            }
         }
 
         order.setTotalAmount(total);
@@ -70,6 +86,9 @@ public class OrderService {
 
         // 清空购物车
         cartService.clearCart(username);
+
+        // 发送订单确认邮件
+        sendOrderEmail(user, order);
 
         return order;
     }
@@ -89,6 +108,11 @@ public class OrderService {
         order.setReceiverName(receiverName);
         order.setReceiverPhone(receiverPhone);
 
+        // 库存校验与扣减
+        if (product.getStock() != null && product.getStock() < quantity) {
+            throw new RuntimeException("商品 [" + product.getName() + "] 库存不足，当前库存: " + product.getStock());
+        }
+
         OrderItem orderItem = new OrderItem();
         orderItem.setOrder(order);
         orderItem.setProduct(product);
@@ -97,6 +121,11 @@ public class OrderService {
 
         order.setTotalAmount(product.getPrice().multiply(BigDecimal.valueOf(quantity)));
         order.setOrderItems(Collections.singletonList(orderItem));
+
+        if (product.getStock() != null) {
+            product.setStock(product.getStock() - quantity);
+            cartService.getProductService().saveProduct(product);
+        }
 
         return orderRepository.save(order);
     }
@@ -108,7 +137,18 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
         order.setStatus("PAID");
         order.setPaidAt(LocalDateTime.now());
-        return orderRepository.save(order);
+        order = orderRepository.save(order);
+
+        // 发送付款确认邮件
+        if (order.getUser().getEmail() != null && !order.getUser().getEmail().isEmpty()) {
+            emailService.sendPaymentConfirmation(
+                    order.getUser().getEmail(),
+                    order.getUser().getFullName() != null ? order.getUser().getFullName() : order.getUser().getUsername(),
+                    order.getOrderNo(),
+                    order.getTotalAmount().toString());
+        }
+
+        return order;
     }
 
     // 获取用户订单
@@ -213,6 +253,43 @@ public class OrderService {
         counts.put("COMPLETED", orderRepository.countByStatus("COMPLETED"));
         counts.put("CANCELLED", orderRepository.countByStatus("CANCELLED"));
         return counts;
+    }
+
+    // 取消订单（含库存恢复）
+    @Transactional
+    public Order cancelOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("订单不存在"));
+
+        if ("CANCELLED".equals(order.getStatus())) {
+            throw new RuntimeException("订单已取消");
+        }
+        if ("SHIPPED".equals(order.getStatus()) || "COMPLETED".equals(order.getStatus())) {
+            throw new RuntimeException("已发货/完成的订单无法取消");
+        }
+
+        order.setStatus("CANCELLED");
+
+        // 恢复库存
+        for (OrderItem item : order.getOrderItems()) {
+            Product product = item.getProduct();
+            if (product.getStock() != null) {
+                product.setStock(product.getStock() + item.getQuantity());
+                cartService.getProductService().saveProduct(product);
+            }
+        }
+
+        return orderRepository.save(order);
+    }
+
+    private void sendOrderEmail(User user, Order order) {
+        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+            emailService.sendOrderConfirmation(
+                    user.getEmail(),
+                    user.getFullName() != null ? user.getFullName() : user.getUsername(),
+                    order.getOrderNo(),
+                    order.getTotalAmount().toString());
+        }
     }
 
     private String generateOrderNo() {

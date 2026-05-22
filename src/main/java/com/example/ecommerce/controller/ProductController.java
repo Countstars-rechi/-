@@ -38,9 +38,6 @@ public class ProductController {
                               @RequestParam(name = "category", required = false) String category,
                               @RequestParam(name = "keyword", required = false) String keyword,
                               HttpServletRequest request) {
-        String username = authentication.getName();
-        User user = userService.getCurrentUser(username);
-
         List<Product> products;
         if (keyword != null && !keyword.isEmpty()) {
             products = productService.searchProducts(keyword);
@@ -52,11 +49,15 @@ public class ProductController {
             products = productService.getAllProducts();
         }
 
-        // 记录浏览日志
-        logService.logBrowse(user, null, category != null ? category : "all", 10, request);
+        // 已登录用户记录浏览日志
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            User user = userService.getCurrentUser(username);
+            logService.logBrowse(user, null, category != null ? category : "all", 10, request);
+            model.addAttribute("username", username);
+        }
 
         model.addAttribute("products", products);
-        model.addAttribute("username", username);
         model.addAttribute("categories", productService.getAllCategories());
 
         return "products";
@@ -66,19 +67,20 @@ public class ProductController {
     public String productDetail(@RequestParam("id") Long id, Model model,
                                  Authentication authentication,
                                  HttpServletRequest request) {
-        String username = authentication.getName();
-        User user = userService.getCurrentUser(username);
         Product product = productService.getProductById(id);
 
-        // 记录浏览日志
-        logService.logBrowse(user, product, product.getCategory(), 30, request);
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            User user = userService.getCurrentUser(username);
+            logService.logBrowse(user, product, product.getCategory(), 30, request);
+            model.addAttribute("username", username);
 
-        // 获取推荐商品
-        List<Product> recommendations = analysisService.getRecommendations(id, 4);
+            // 获取推荐商品
+            List<Product> recommendations = analysisService.getRecommendations(id, 4);
+            model.addAttribute("recommendations", recommendations);
+        }
 
         model.addAttribute("product", product);
-        model.addAttribute("username", username);
-        model.addAttribute("recommendations", recommendations);
 
         return "product-detail";
     }
