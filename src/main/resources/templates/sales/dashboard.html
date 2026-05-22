@@ -135,6 +135,11 @@
             }]
         });
 
+        var rankNames = [], rankData = [];
+        <th:block th:each="r : ${ranking}">
+        rankNames.push([[${r.productName}]]);
+        rankData.push([[${r.totalSold}]]);
+        </th:block>
         var rankChart = echarts.init(document.getElementById('rankingChart'));
         rankChart.setOption({
             tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
@@ -142,11 +147,11 @@
             xAxis: { type: 'value' },
             yAxis: {
                 type: 'category',
-                data: [[${#lists.toList(ranking).![productName]}]].reverse()
+                data: rankNames.reverse()
             },
             series: [{
                 type: 'bar',
-                data: [[${#lists.toList(ranking).![totalSold]}]].reverse(),
+                data: rankData.reverse(),
                 itemStyle: { color: '#198754' }
             }]
         });
