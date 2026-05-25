@@ -70,39 +70,39 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initUsers() {
-        if (userRepository.count() > 0) {
-            return;
+        if (userRepository.count() == 0) {
+            // 首次启动：创建三个角色
+            createUser(adminUsername, adminPassword, adminFullName, "ADMIN");
+            createUser(salesUsername, salesPassword, salesFullName, "SALES");
+            User testUser = createUser(testUsername, testPassword, testFullName, "CUSTOMER");
+            testUser.setEmail("test@example.com");
+            testUser.setPhone("13800138000");
+            testUser.setRegion("北京");
+            userRepository.save(testUser);
+        } else {
+            // 每次启动：重置三个示例账号的密码，确保与登录页一致
+            resetPassword(adminUsername, adminPassword);
+            resetPassword(salesUsername, salesPassword);
+            resetPassword(testUsername, testPassword);
         }
+    }
 
-        // 管理员
-        User admin = new User();
-        admin.setUsername(adminUsername);
-        admin.setPassword(passwordEncoder.encode(adminPassword));
-        admin.setFullName(adminFullName);
-        admin.setRole("ADMIN");
-        admin.setEnabled(true);
-        userRepository.save(admin);
+    private User createUser(String username, String password, String fullName, String role) {
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setFullName(fullName);
+        user.setRole(role);
+        user.setEnabled(true);
+        userRepository.save(user);
+        return user;
+    }
 
-        // 销售人员
-        User sales = new User();
-        sales.setUsername(salesUsername);
-        sales.setPassword(passwordEncoder.encode(salesPassword));
-        sales.setFullName(salesFullName);
-        sales.setRole("SALES");
-        sales.setEnabled(true);
-        userRepository.save(sales);
-
-        // 测试用户
-        User testUser = new User();
-        testUser.setUsername(testUsername);
-        testUser.setPassword(passwordEncoder.encode(testPassword));
-        testUser.setFullName(testFullName);
-        testUser.setRole("CUSTOMER");
-        testUser.setEnabled(true);
-        testUser.setEmail("test@example.com");
-        testUser.setPhone("13800138000");
-        testUser.setRegion("北京");
-        userRepository.save(testUser);
+    private void resetPassword(String username, String password) {
+        userRepository.findByUsername(username).ifPresent(user -> {
+            user.setPassword(passwordEncoder.encode(password));
+            userRepository.save(user);
+        });
     }
 
     private void initProducts() {
