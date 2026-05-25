@@ -37,6 +37,9 @@ public class OrderController {
     public String orderDetail(@PathVariable Long id, Model model,
                                Authentication authentication) {
         Order order = orderService.getOrderById(id);
+        if (!order.getUser().getUsername().equals(authentication.getName())) {
+            throw new AccessDeniedException("无权查看此订单");
+        }
         model.addAttribute("order", order);
         model.addAttribute("username", authentication.getName());
         return "order-detail";

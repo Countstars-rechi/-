@@ -32,9 +32,11 @@
                     <td><span class="badge bg-secondary fs-6" th:text="${cat}"></span></td>
                     <td>
                         <a th:href="@{/products(category=${cat})}" class="btn btn-sm btn-outline-primary">查看商品</a>
-                        <a th:href="@{/sales/categories/delete(category=${cat})}"
-                           class="btn btn-sm btn-outline-danger ms-1"
-                           onclick="return confirm('确定删除分类 [[${cat}]]？\n如果该分类下还有商品则无法删除。')">删除</a>
+                        <form th:action="@{/sales/categories/delete}" method="post" style="display:inline;"
+                              onsubmit="return confirm('确定删除分类 [[${cat}]]？\n如果该分类下还有商品则无法删除。')">
+                            <input type="hidden" name="category" th:value="${cat}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger ms-1">删除</button>
+                        </form>
                     </td>
                 </tr>
             </tbody>

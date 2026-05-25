@@ -96,7 +96,7 @@ public class SalesController {
                                  @RequestParam Integer stock,
                                  @RequestParam String category,
                                  @RequestParam(defaultValue = "") String imageUrl,
-                                 @RequestParam(defaultValue = "true") boolean enabled,
+                                 @RequestParam(defaultValue = "false") boolean enabled,
                                  Authentication authentication,
                                  HttpServletRequest request) {
         productService.updateProduct(id, name, description, price, stock, category, imageUrl, enabled);
@@ -180,7 +180,7 @@ public class SalesController {
         return "redirect:/sales/categories?added&name=" + URLEncoder.encode(categoryName, StandardCharsets.UTF_8);
     }
 
-    @GetMapping("/categories/delete")
+    @PostMapping("/categories/delete")
     public String deleteCategory(@RequestParam String category,
                                   Authentication authentication,
                                   HttpServletRequest request) {

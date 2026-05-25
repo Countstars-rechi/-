@@ -7,6 +7,7 @@ import com.example.ecommerce.service.LogService;
 import com.example.ecommerce.service.ProductService;
 import com.example.ecommerce.service.UserService;
 import org.springframework.data.domain.Page;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -54,7 +55,8 @@ public class ProductController {
         }
 
         // 已登录用户记录浏览日志
-        if (authentication != null && authentication.isAuthenticated()) {
+        if (authentication != null && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken)) {
             String username = authentication.getName();
             User user = userService.getCurrentUser(username);
             logService.logBrowse(user, null, category != null ? category : "all", 10, request);
@@ -76,7 +78,8 @@ public class ProductController {
                                  HttpServletRequest request) {
         Product product = productService.getProductById(id);
 
-        if (authentication != null && authentication.isAuthenticated()) {
+        if (authentication != null && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken)) {
             String username = authentication.getName();
             User user = userService.getCurrentUser(username);
             logService.logBrowse(user, product, product.getCategory(), 30, request);
