@@ -27,14 +27,14 @@
                 </thead>
                 <tbody>
                     <tr th:each="log : ${logs}">
-                        <td th:text="${log.createdAt}">2024-01-01 12:00</td>
-                        <td th:text="${log.operator}">admin</td>
+                        <td th:text="${log.operationTime}">2024-01-01 12:00</td>
+                        <td th:text="${log.username}">admin</td>
                         <td>
-                            <span class="badge" th:classappend="${log.operationType == 'ADMIN'} ? 'bg-danger' : 
-                                (${log.operationType == 'SALES'} ? 'bg-success' : 'bg-info')"
-                                th:text="${log.operationType}">类型</span>
+                            <span class="badge" th:classappend="${log.role == 'ADMIN'} ? 'bg-danger' :
+                                (${log.role == 'SALES'} ? 'bg-success' : 'bg-info')"
+                                th:text="${log.role}">类型</span>
                         </td>
-                        <td th:text="${log.detail}">操作内容</td>
+                        <td th:text="${log.operation}">操作内容</td>
                         <td th:text="${log.ipAddress}">127.0.0.1</td>
                     </tr>
                 </tbody>
