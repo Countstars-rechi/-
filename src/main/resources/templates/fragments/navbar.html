@@ -3,7 +3,7 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 
-<!-- 顾客导航栏（支持未登录/已登录切换） -->
+<!-- 顾客导航栏 -->
 <nav th:fragment="customer(active)" class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
         <a class="navbar-brand" href="/products">电商网站</a>
@@ -13,32 +13,15 @@
                 <a class="nav-link" th:classappend="${active == 'cart'} ? 'active'" href="/cart">购物车</a>
                 <a class="nav-link" th:classappend="${active == 'orders'} ? 'active'" href="/orders">我的订单</a>
                 <a class="nav-link" th:classappend="${active == 'profile'} ? 'active'" href="/profile">个人中心</a>
-                <a sec:authorize="hasRole('ADMIN')" class="nav-link text-warning fw-bold" href="/admin/dashboard">后台</a>
-                <a sec:authorize="hasRole('SALES')" class="nav-link text-warning fw-bold" href="/sales/dashboard">后台</a>
                 <span class="nav-link text-light">欢迎，[[${username}]]</span>
-                <a class="nav-link text-light" href="/logout">退出</a>
+                <form th:action="@{/logout}" method="post" style="display:inline;">
+                    <button type="submit" class="nav-link text-light btn btn-link border-0 p-0" style="text-decoration:none;">退出</button>
+                </form>
             </th:block>
             <th:block th:unless="${username != null}">
                 <a class="nav-link" href="/login">登录</a>
                 <a class="nav-link" href="/register">注册</a>
             </th:block>
-        </div>
-    </div>
-</nav>
-
-<!-- 顾客导航栏（仅已登录） -->
-<nav th:fragment="customerLoggedIn(active)" class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/products">电商网站</a>
-        <div class="navbar-nav">
-            <a class="nav-link" th:classappend="${active == 'products'} ? 'active'" href="/products">商品列表</a>
-            <a class="nav-link" th:classappend="${active == 'cart'} ? 'active'" href="/cart">购物车</a>
-            <a class="nav-link" th:classappend="${active == 'orders'} ? 'active'" href="/orders">我的订单</a>
-            <a class="nav-link" th:classappend="${active == 'profile'} ? 'active'" href="/profile">个人中心</a>
-            <a sec:authorize="hasRole('ADMIN')" class="nav-link text-warning fw-bold" href="/admin/dashboard">后台</a>
-            <a sec:authorize="hasRole('SALES')" class="nav-link text-warning fw-bold" href="/sales/dashboard">后台</a>
-            <span class="nav-link text-light">欢迎，[[${username}]]</span>
-            <a class="nav-link text-light" href="/logout">退出</a>
         </div>
     </div>
 </nav>
@@ -55,8 +38,9 @@
             <a class="nav-link" th:classappend="${active == 'browse-logs'} ? 'active'" href="/sales/browse-logs">浏览日志</a>
             <a class="nav-link" th:classappend="${active == 'categories'} ? 'active'" href="/sales/categories">分类管理</a>
             <span class="nav-link text-light">[[${username}]]</span>
-            <a class="nav-link text-light" href="/products">前台</a>
-            <a class="nav-link text-light" href="/logout">退出</a>
+            <form th:action="@{/logout}" method="post" style="display:inline;">
+                <button type="submit" class="nav-link text-light btn btn-link border-0 p-0" style="text-decoration:none;">退出</button>
+            </form>
         </div>
     </div>
 </nav>
@@ -72,8 +56,9 @@
             <a class="nav-link" th:classappend="${active == 'operation-logs'} ? 'active'" href="/admin/operation-logs">操作日志</a>
             <a class="nav-link" th:classappend="${active == 'user-profile'} ? 'active'" href="/admin/user-profile">用户画像</a>
             <span class="nav-link text-light">[[${username}]]</span>
-            <a class="nav-link text-light" href="/products">前台</a>
-            <a class="nav-link text-light" href="/logout">退出</a>
+            <form th:action="@{/logout}" method="post" style="display:inline;">
+                <button type="submit" class="nav-link text-light btn btn-link border-0 p-0" style="text-decoration:none;">退出</button>
+            </form>
         </div>
     </div>
 </nav>

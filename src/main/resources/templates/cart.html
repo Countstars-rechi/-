@@ -7,7 +7,7 @@
     <link href="/css/custom.css" rel="stylesheet">
 </head>
 <body>
-    <th:block th:replace="fragments/navbar :: customerLoggedIn('cart')"></th:block>
+    <th:block th:replace="fragments/navbar :: customer('cart')"></th:block>
 
     <!-- 购物车内容 -->
     <div class="container mt-4">
@@ -39,7 +39,9 @@
                         <td th:text="${item.quantity}">1</td>
                         <td th:text="'¥' + ${item.product.price * item.quantity}">¥0.00</td>
                         <td>
-                            <a th:href="@{/cart/remove/{id}(id=${item.id})}" class="btn btn-danger btn-sm">删除</a>
+                            <form th:action="@{/cart/remove/{id}(id=${item.id})}" method="post" style="display:inline;" onsubmit="return confirm('确定删除？')">
+                                <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                            </form>
                         </td>
                     </tr>
                 </tbody>

@@ -4,6 +4,7 @@ import com.example.ecommerce.entity.CartItem;
 import com.example.ecommerce.entity.Product;
 import com.example.ecommerce.entity.User;
 import com.example.ecommerce.repository.CartItemRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -48,8 +49,13 @@ public class CartService {
         return cartItemRepository.findByUser(user);
     }
 
-    public void removeCartItem(Long cartItemId) {
-        cartItemRepository.deleteById(cartItemId);
+    public void removeCartItem(String username, Long cartItemId) {
+        CartItem item = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new RuntimeException("购物车项不存在"));
+        if (!item.getUser().getUsername().equals(username)) {
+            throw new AccessDeniedException("无权操作此购物车项");
+        }
+        cartItemRepository.delete(item);
     }
 
     public void clearCart(String username) {

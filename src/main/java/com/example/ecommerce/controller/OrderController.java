@@ -2,6 +2,7 @@ package com.example.ecommerce.controller;
 
 import com.example.ecommerce.entity.Order;
 import com.example.ecommerce.service.OrderService;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -43,14 +44,22 @@ public class OrderController {
 
     // 支付订单（模拟）
     @PostMapping("/{id}/pay")
-    public String payOrder(@PathVariable Long id) {
+    public String payOrder(@PathVariable Long id, Authentication authentication) {
+        Order order = orderService.getOrderById(id);
+        if (!order.getUser().getUsername().equals(authentication.getName())) {
+            throw new AccessDeniedException("无权操作此订单");
+        }
         orderService.payOrder(id);
         return "redirect:/orders/" + id + "?paid";
     }
 
     // 取消订单
     @PostMapping("/{id}/cancel")
-    public String cancelOrder(@PathVariable Long id) {
+    public String cancelOrder(@PathVariable Long id, Authentication authentication) {
+        Order order = orderService.getOrderById(id);
+        if (!order.getUser().getUsername().equals(authentication.getName())) {
+            throw new AccessDeniedException("无权操作此订单");
+        }
         try {
             orderService.cancelOrder(id);
             return "redirect:/orders/" + id + "?cancelled";

@@ -62,13 +62,16 @@
                                 <p class="card-text text-muted small" th:if="${product.stock != null}">
                                     库存: <span th:text="${product.stock}"></span>
                                 </p>
-                                <form th:action="@{/cart/add}" method="post">
+                                <form th:if="${username != null}" th:action="@{/cart/add}" method="post">
                                     <input type="hidden" name="productId" th:value="${product.id}">
                                     <div class="input-group">
                                         <input type="number" name="quantity" class="form-control" value="1" min="1" max="10">
                                         <button type="submit" class="btn btn-primary">加入购物车</button>
                                     </div>
                                 </form>
+                                <div th:unless="${username != null}" class="text-muted small">
+                                    <a href="/login">登录</a> 后即可购买
+                                </div>
                             </div>
                         </div>
                     </div>

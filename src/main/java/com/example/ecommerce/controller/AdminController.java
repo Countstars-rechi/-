@@ -85,7 +85,7 @@ public class AdminController {
     }
 
     // 启用/禁用账号
-    @GetMapping("/sales-users/toggle/{username}")
+    @PostMapping("/sales-users/toggle/{username}")
     public String toggleUser(@PathVariable String username,
                               Authentication authentication,
                               HttpServletRequest request) {

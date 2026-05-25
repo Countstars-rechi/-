@@ -41,9 +41,10 @@
                     </td>
                     <td th:text="${user.lastLoginAt}">2024-01-01</td>
                     <td>
-                        <a th:href="@{/admin/sales-users/toggle/{username}(username=${user.username})}"
-                           class="btn btn-sm" th:classappend="${user.enabled} ? 'btn-warning' : 'btn-success'"
-                           th:text="${user.enabled} ? '禁用' : '启用'"></a>
+                        <form th:action="@{/admin/sales-users/toggle/{username}(username=${user.username})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm" th:classappend="${user.enabled} ? 'btn-warning' : 'btn-success'"
+                                    th:text="${user.enabled} ? '禁用' : '启用'"></button>
+                        </form>
                         <button class="btn btn-sm btn-info" data-bs-toggle="modal"
                                 th:attr="data-bs-target='#resetModal' + ${user.id}">重置密码</button>
 

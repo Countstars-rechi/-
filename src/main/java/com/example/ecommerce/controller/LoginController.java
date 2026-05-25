@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -38,6 +37,12 @@ public class LoginController {
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String phone,
             @RequestParam(required = false) String region) {
+        if (password == null || password.length() < 6) {
+            return "redirect:/register?error=" + URLEncoder.encode("密码长度不能少于6位", StandardCharsets.UTF_8);
+        }
+        if (username == null || username.length() < 3) {
+            return "redirect:/register?error=" + URLEncoder.encode("用户名长度不能少于3位", StandardCharsets.UTF_8);
+        }
         try {
             userService.registerUser(username, password, fullName, email, phone, region);
             return "redirect:/login?registered";

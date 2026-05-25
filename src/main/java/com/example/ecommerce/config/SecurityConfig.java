@@ -28,10 +28,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, UserService userService) throws Exception {
         http
-                .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
                         .antMatchers("/login", "/register", "/products", "/product/detail",
                                      "/css/**", "/js/**", "/images/**", "/error").permitAll()
+                        .antMatchers("/cart/**", "/orders/**", "/profile/**").hasRole("CUSTOMER")
                         .antMatchers("/sales/**").hasAnyRole("SALES", "ADMIN")
                         .antMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

@@ -106,7 +106,7 @@ public class SalesController {
     }
 
     // 下架商品
-    @GetMapping("/products/disable/{id}")
+    @PostMapping("/products/disable/{id}")
     public String disableProduct(@PathVariable Long id,
                                   Authentication authentication,
                                   HttpServletRequest request) {
@@ -123,6 +123,14 @@ public class SalesController {
         model.addAttribute("orders", orderService.getAllOrders());
         model.addAttribute("username", authentication.getName());
         return "sales/orders";
+    }
+
+    // 订单详情
+    @GetMapping("/orders/{id}")
+    public String orderDetail(@PathVariable Long id, Model model, Authentication authentication) {
+        model.addAttribute("order", orderService.getOrderById(id));
+        model.addAttribute("username", authentication.getName());
+        return "sales/order-detail";
     }
 
     // 发货
