@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 
 <!-- 顾客导航栏（支持未登录/已登录切换） -->
@@ -11,7 +12,9 @@
             <th:block th:if="${username != null}">
                 <a class="nav-link" th:classappend="${active == 'cart'} ? 'active'" href="/cart">购物车</a>
                 <a class="nav-link" th:classappend="${active == 'orders'} ? 'active'" href="/orders">我的订单</a>
-            <a class="nav-link" th:classappend="${active == 'profile'} ? 'active'" href="/profile">个人中心</a>
+                <a class="nav-link" th:classappend="${active == 'profile'} ? 'active'" href="/profile">个人中心</a>
+                <a sec:authorize="hasRole('ADMIN')" class="nav-link text-warning fw-bold" href="/admin/dashboard">后台</a>
+                <a sec:authorize="hasRole('SALES')" class="nav-link text-warning fw-bold" href="/sales/dashboard">后台</a>
                 <span class="nav-link text-light">欢迎，[[${username}]]</span>
                 <a class="nav-link text-light" href="/logout">退出</a>
             </th:block>
@@ -23,7 +26,7 @@
     </div>
 </nav>
 
-<!-- 顾客导航栏（仅已登录，用于购物车/订单/结算等必须登录的页面） -->
+<!-- 顾客导航栏（仅已登录） -->
 <nav th:fragment="customerLoggedIn(active)" class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
         <a class="navbar-brand" href="/products">电商网站</a>
@@ -32,6 +35,8 @@
             <a class="nav-link" th:classappend="${active == 'cart'} ? 'active'" href="/cart">购物车</a>
             <a class="nav-link" th:classappend="${active == 'orders'} ? 'active'" href="/orders">我的订单</a>
             <a class="nav-link" th:classappend="${active == 'profile'} ? 'active'" href="/profile">个人中心</a>
+            <a sec:authorize="hasRole('ADMIN')" class="nav-link text-warning fw-bold" href="/admin/dashboard">后台</a>
+            <a sec:authorize="hasRole('SALES')" class="nav-link text-warning fw-bold" href="/sales/dashboard">后台</a>
             <span class="nav-link text-light">欢迎，[[${username}]]</span>
             <a class="nav-link text-light" href="/logout">退出</a>
         </div>
