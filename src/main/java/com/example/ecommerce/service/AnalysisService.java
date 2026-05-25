@@ -35,15 +35,20 @@ public class AnalysisService {
 
     /**
      * 用户画像分析
-     * 返回：地域分布、购买力等级、偏好类别
+     * 返回：基本信息、购买力等级、偏好类别、活跃度等
      */
     public Map<String, Object> getUserProfile(String username) {
         Map<String, Object> profile = new HashMap<>();
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) return profile;
 
-        // 地域
+        // 基本信息
+        profile.put("username", user.getUsername());
+        profile.put("fullName", user.getFullName() != null ? user.getFullName() : "");
+        profile.put("email", user.getEmail() != null ? user.getEmail() : "");
+        profile.put("phone", user.getPhone() != null ? user.getPhone() : "");
         profile.put("region", user.getRegion() != null ? user.getRegion() : "未知");
+        profile.put("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : "");
 
         // 购买力分析（基于历史订单总金额）
         List<Order> orders = orderRepository.findByUser(user);
@@ -51,24 +56,49 @@ public class AnalysisService {
                 .filter(o -> "PAID".equals(o.getStatus()) || "COMPLETED".equals(o.getStatus()))
                 .mapToDouble(o -> o.getTotalAmount().doubleValue())
                 .sum();
+        int totalOrders = (int) orders.stream()
+                .filter(o -> !"CANCELLED".equals(o.getStatus()))
+                .count();
+        double avgOrderAmount = totalOrders > 0 ? totalSpent / totalOrders : 0;
+
         String purchasingPower;
         if (totalSpent > 10000) purchasingPower = "高";
         else if (totalSpent > 5000) purchasingPower = "中";
         else purchasingPower = "低";
+
         profile.put("purchasingPower", purchasingPower);
         profile.put("totalSpent", totalSpent);
-        profile.put("orderCount", orders.size());
+        profile.put("totalOrders", totalOrders);
+        profile.put("avgOrderAmount", avgOrderAmount);
 
-        // 偏好类别（基于浏览记录）
-        List<Object[]> categoryPrefs = browseLogRepository.findUserCategoryPreferences(user);
-        List<Map<String, Object>> preferences = new ArrayList<>();
-        for (Object[] pref : categoryPrefs) {
-            Map<String, Object> item = new HashMap<>();
-            item.put("category", pref[0]);
-            item.put("count", pref[1]);
-            preferences.add(item);
-        }
-        profile.put("categoryPreferences", preferences);
+        // 活跃度（基于浏览记录数量）
+        List<BrowseLog> browseLogs = browseLogRepository.findByUser(user);
+        long browseCount = browseLogs.size();
+        String activityLevel;
+        if (browseCount > 50) activityLevel = "高";
+        else if (browseCount > 10) activityLevel = "中";
+        else activityLevel = "低";
+        profile.put("activityLevel", activityLevel);
+
+        // 偏好类别
+        List<String> preferredCategories = browseLogRepository.findUserCategoryPreferences(user)
+                .stream()
+                .map(pref -> (String) pref[0])
+                .collect(Collectors.toList());
+        profile.put("preferredCategories", preferredCategories);
+
+        // 最近浏览（取最近5条）
+        List<String> recentBrowses = browseLogRepository.findByUserOrderByBrowseTimeDesc(user)
+                .stream()
+                .limit(5)
+                .map(b -> {
+                    if (b.getProduct() != null) {
+                        return b.getProduct().getName();
+                    }
+                    return "浏览了 " + (b.getCategory() != null ? b.getCategory() : "首页");
+                })
+                .collect(Collectors.toList());
+        profile.put("recentBrowses", recentBrowses);
 
         return profile;
     }
