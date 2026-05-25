@@ -9,53 +9,128 @@
 <body class="bg-light">
     <div class="container mt-5">
         <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header text-center">
-                        <h3>电商网站登录</h3>
-                    </div>
-                    <div class="card-body">
-                        <form th:action="@{/login}" method="post">
-                            <div th:if="${param.error}" class="alert alert-danger">
-                                用户名或密码错误！
-                            </div>
-                            <div th:if="${param.logout}" class="alert alert-success">
-                                已成功退出登录！
-                            </div>
-                            <div th:if="${param.registered}" class="alert alert-success">
-                                注册成功！请登录。
-                            </div>
+            <div class="col-md-5">
+                <div class="text-center mb-3">
+                    <a href="/products" class="text-decoration-none">
+                        <h4 class="text-dark fw-bold">电商网站</h4>
+                    </a>
+                </div>
 
+                <!-- 角色选择 -->
+                <div class="d-flex gap-2 mb-3" role="group">
+                    <button class="btn btn-primary flex-fill active" id="btn-customer"
+                            onclick="switchRole('customer')">顾客登录</button>
+                    <button class="btn btn-outline-success flex-fill" id="btn-sales"
+                            onclick="switchRole('sales')">销售登录</button>
+                    <button class="btn btn-outline-danger flex-fill" id="btn-admin"
+                            onclick="switchRole('admin')">管理登录</button>
+                </div>
+
+                <!-- 登录卡片 -->
+                <div class="card" id="login-card" style="border-top: 4px solid #2563eb;">
+                    <div class="card-body p-4">
+                        <!-- 角色标题 -->
+                        <h5 class="text-center mb-3" id="role-title">顾客登录</h5>
+
+                        <!-- 消息提示 -->
+                        <div th:if="${param.error}" class="alert alert-danger py-2 small">用户名或密码错误</div>
+                        <div th:if="${param.logout}" class="alert alert-success py-2 small">已成功退出登录</div>
+                        <div th:if="${param.registered}" class="alert alert-success py-2 small">注册成功，请登录</div>
+
+                        <!-- 登录表单 -->
+                        <form th:action="@{/login}" method="post">
                             <div class="mb-3">
-                                <label for="username" class="form-label">用户名</label>
-                                <input type="text" class="form-control" id="username" name="username" required>
+                                <label for="username" class="form-label small fw-bold text-secondary">用户名</label>
+                                <input type="text" class="form-control" id="username" name="username"
+                                       placeholder="请输入用户名" required autofocus>
                             </div>
                             <div class="mb-3">
-                                <label for="password" class="form-label">密码</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
+                                <label for="password" class="form-label small fw-bold text-secondary">密码</label>
+                                <input type="password" class="form-control" id="password" name="password"
+                                       placeholder="请输入密码" required>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">登录</button>
+                            <button type="submit" class="btn w-100 fw-bold" id="login-btn"
+                                    style="background:#2563eb;color:#fff;">登 录</button>
                         </form>
-                        <div class="mt-3 text-center">
-                            <a href="/products">返回首页</a> |
-                            <a href="/register">还没有账号？立即注册</a>
-                        </div>
-                        <div class="mt-3">
-                            <div class="card bg-light">
-                                <div class="card-body small">
-                                    <h6 class="card-title text-muted">示例账号</h6>
-                                    <table class="table table-sm table-borderless mb-0">
-                                        <tr><td width="60"><span class="badge bg-primary">顾客</span></td><td>testuser / 123456</td></tr>
-                                        <tr><td><span class="badge bg-success">销售</span></td><td>sales01 / sales123</td></tr>
-                                        <tr><td><span class="badge bg-danger">管理</span></td><td>admin / admin123</td></tr>
-                                    </table>
-                                </div>
+
+                        <!-- 示例账号 -->
+                        <div class="mt-3 p-3 rounded" id="demo-box" style="background:#eff6ff;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge bg-primary" id="demo-badge">顾客</span>
+                                <span class="small text-muted">示例账号</span>
                             </div>
+                            <code class="small" id="demo-account">testuser / 123456</code>
+                        </div>
+
+                        <div class="mt-3 text-center small">
+                            <a href="/products">返回首页</a> &nbsp;|&nbsp;
+                            <a href="/register">还没有账号？立即注册</a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        const roles = {
+            customer: {
+                name: '顾客登录',
+                color: '#2563eb',
+                bg: '#eff6ff',
+                badge: 'bg-primary',
+                badgeText: '顾客',
+                account: 'testuser / 123456',
+                btnClass: 'btn-primary',
+                btnOutClass: 'btn-outline-primary'
+            },
+            sales: {
+                name: '销售登录',
+                color: '#059669',
+                bg: '#ecfdf5',
+                badge: 'bg-success',
+                badgeText: '销售',
+                account: 'sales01 / sales123',
+                btnClass: 'btn-success',
+                btnOutClass: 'btn-outline-success'
+            },
+            admin: {
+                name: '管理登录',
+                color: '#dc2626',
+                bg: '#fef2f2',
+                badge: 'bg-danger',
+                badgeText: '管理',
+                account: 'admin / admin123',
+                btnClass: 'btn-danger',
+                btnOutClass: 'btn-outline-danger'
+            }
+        };
+
+        function switchRole(role) {
+            const r = roles[role];
+            // card border
+            document.getElementById('login-card').style.borderTopColor = r.color;
+            // title
+            document.getElementById('role-title').textContent = r.name;
+            // login button
+            const lb = document.getElementById('login-btn');
+            lb.style.background = r.color;
+            lb.style.color = '#fff';
+            // demo box
+            document.getElementById('demo-box').style.background = r.bg;
+            document.getElementById('demo-badge').className = 'badge ' + r.badge;
+            document.getElementById('demo-badge').textContent = r.badgeText;
+            document.getElementById('demo-account').textContent = r.account;
+            // top buttons
+            ['customer','sales','admin'].forEach(k => {
+                const btn = document.getElementById('btn-' + k);
+                if (k === role) {
+                    btn.className = 'btn flex-fill active ' + r.btnClass;
+                } else {
+                    btn.className = 'btn flex-fill ' + roles[k].btnOutClass;
+                }
+            });
+        }
+    </script>
 </body>
 </html>
