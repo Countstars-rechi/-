@@ -1,32 +1,39 @@
 package com.example.ecommerce.entity;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "operation_logs")
 public class OperationLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(nullable = false)
-    private String username;        // 操作人用户名
+    private String username;
 
     @Column(nullable = false)
-    private String role;            // 操作人角色
+    private String role;
 
     @Column(nullable = false)
-    private String operation;       // 操作内容（如：修改商品价格、删除用户等）
+    private String operation;
 
     @Column(nullable = false)
-    private String ipAddress;       // 操作IP
+    private String ipAddress;
 
     @Column(updatable = false)
-    private LocalDateTime operationTime;    // 操作时间
+    private LocalDateTime operationTime;
 
     @PrePersist
     protected void onCreate() {

@@ -1,45 +1,51 @@
 package com.example.ecommerce.entity;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "orders")
 public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String orderNo;     // 订单号
+    private String orderNo;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;          // 下单用户
+    private User user;
 
     @Column(nullable = false)
-    private BigDecimal totalAmount; // 订单总金额
+    private BigDecimal totalAmount;
 
     @Column(nullable = false)
-    private String status;      // 订单状态: PENDING, PAID, SHIPPED, COMPLETED, CANCELLED
+    private String status;
 
-    private String shippingAddress; // 收货地址
+    private String shippingAddress;
 
-    private String receiverName;    // 收货人
+    private String receiverName;
 
-    private String receiverPhone;   // 收货人电话
+    private String receiverPhone;
 
     @Column(updatable = false)
-    private LocalDateTime createdAt;    // 下单时间
+    private LocalDateTime createdAt;
 
-    private LocalDateTime paidAt;       // 付款时间
+    private LocalDateTime paidAt;
 
-    // 订单项
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems;
 

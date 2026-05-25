@@ -1,16 +1,23 @@
 package com.example.ecommerce.entity;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "browse_logs")
 public class BrowseLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne
@@ -19,17 +26,17 @@ public class BrowseLog {
 
     @ManyToOne
     @JoinColumn(name = "product_id")
-    private Product product;        // 浏览的商品（可为空，表示浏览首页等）
+    private Product product;
 
-    private String category;        // 商品类别
+    private String category;
 
-    private Integer stayDuration;   // 停留时长（秒）
+    private Integer stayDuration;
 
     @Column(nullable = false)
-    private String ipAddress;       // IP地址
+    private String ipAddress;
 
     @Column(updatable = false)
-    private LocalDateTime browseTime;   // 浏览时间
+    private LocalDateTime browseTime;
 
     @PrePersist
     protected void onCreate() {

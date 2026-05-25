@@ -1,16 +1,23 @@
 package com.example.ecommerce.entity;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import javax.persistence.*;
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "products")
 public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(nullable = false)
@@ -21,11 +28,11 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal price;
 
-    private Integer stock;          // 库存数量
+    private Integer stock;
 
-    private String category;        // 商品类别（如：手机、平板、耳机等）
+    private String category;
 
     private String imageUrl;
 
-    private boolean enabled = true; // 是否上架
+    private boolean enabled = true;
 }
